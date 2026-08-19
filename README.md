@@ -26,13 +26,23 @@ python app.py
 - 每次提交会调用 DeepSeek API 生成三句回复
 - 结果追加写入同目录 `logs.csv`（含时间戳、愿望、三句回复、Token 数）
 
-## 部署到 Hugging Face Spaces
+## 部署到 Render
 
-1. 注册并登录 https://huggingface.co
-2. 新建 Space → 选择 SDK 为 **Docker**，点 **Import from GitHub** 填入本仓库 `beautyUU/reverse-wish-pool`
-3. 部署完成后，进入 Space 的 **Settings → Variables and secrets**，添加 secret：
+1. 注册并登录 https://render.com（可用 GitHub 账号一键登录）
+2. 点击 **New → Web Service**，选择 GitHub 仓库 `beautyUU/reverse-wish-pool`
+3. 配置：
+   - **Environment**：`Python`
+   - **Build Command**：`pip install -r requirements.txt`
+   - **Start Command**：`gunicorn app:app --workers 1 --threads 4 --timeout 60 --bind 0.0.0.0:$PORT`
+4. 在 **Environment** 页面添加环境变量：
    - 名称：`DEEPSEEK_API_KEY`
    - 值：你的 DeepSeek API Key
-4. 保存后重启 Space 即可
+5. 点击 **Create Web Service**，等待构建完成即可访问
+
+## 代码部署 Cloudflare / Hugging Face
+
+本仓库也随附：
+- `Dockerfile`：可用于 Hugging Face Spaces（SDK 选 Docker）或任意 Docker 平台
+- `render.yaml`：Render Blueprint（Dashboards 里 "+ New → Blueprint" 可直接导入）
 
 > 密钥不会写进仓库，只通过环境变量注入。
