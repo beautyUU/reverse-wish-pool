@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>反向许愿池</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0d;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 0 40px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0 32px;
+        }
+
+        .header .icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+
+        .header h1 {
+            color: #e8d5b0;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 8px;
+        }
+
+        .header .sub {
+            color: #5a5045;
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-top: 10px;
+            font-weight: 300;
+        }
+
+        .header .divider {
+            width: 40px;
+            height: 1px;
+            background: #3a322a;
+            margin: 16px auto 0;
+        }
+
+        .input-area {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 20px 20px 16px;
+            border: 1px solid rgba(200, 170, 130, 0.12);
+            backdrop-filter: blur(4px);
+            transition: border-color 0.3s;
+        }
+
+        .input-area:focus-within {
+            border-color: rgba(200, 170, 130, 0.35);
+        }
+
+        .input-area textarea {
+            width: 100%;
+            height: 72px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e0d5c5;
+            font-size: 18px;
+            resize: none;
+            font-family: inherit;
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        .input-area textarea::placeholder {
+            color: #4a4038;
+            font-size: 16px;
+            font-weight: 300;
+        }
+
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .input-row .char-count {
+            color: #4a4038;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .btn-submit {
+            padding: 8px 28px;
+            background: transparent;
+            border: 1px solid rgba(200, 170, 130, 0.3);
+            border-radius: 20px;
+            color: #c9a86c;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.4s;
+            font-family: inherit;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.95);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-submit:not(:disabled):hover {
+            background: rgba(200, 170, 130, 0.08);
+            border-color: rgba(200, 170, 130, 0.5);
+        }
+
+        .result-area {
+            margin-top: 32px;
+            display: none;
+            animation: fadeUp 0.6s ease-out;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-label {
+            text-align: center;
+            color: #4a4038;
+            font-size: 11px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: transform 0.2s;
+        }
+
+        .card:active {
+            transform: scale(0.99);
+        }
+
+        .card .role {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .card .reply {
+            font-size: 17px;
+            line-height: 1.7;
+            word-break: break-word;
+            font-weight: 300;
+            color: #e8ddd0;
+        }
+
+        .card-liyunlong {
+            background: rgba(40, 55, 40, 0.4);
+            border-left: 3px solid #6b8f5e;
+        }
+        .card-liyunlong .role {
+            color: #8fb582;
+        }
+
+        .card-tongxiangyu {
+            background: rgba(55, 48, 38, 0.4);
+            border-left: 3px solid #c9a86c;
+        }
+        .card-tongxiangyu .role {
+            color: #d4b87a;
+        }
+
+        .card-zhenhuan {
+            background: rgba(55, 38, 40, 0.4);
+            border-left: 3px solid #a05a5a;
+        }
+        .card-zhenhuan .role {
+            color: #c97a7a;
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .footer-actions button {
+            padding: 10px 24px;
+            background: rgba(200, 170, 130, 0.08);
+            border: 1px solid rgba(200, 170, 130, 0.2);
+            border-radius: 20px;
+            color: #c9a86c;
+            font-size: 13px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .footer-actions button:active {
+            transform: scale(0.95);
+        }
+
+        .footer-actions button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            color: #2a2520;
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin-top: 32px;
+            font-weight: 300;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(30, 28, 25, 0.95);
+            color: #c9a86c;
+            padding: 10px 24px;
+            border-radius: 20px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            border: 1px solid rgba(200, 170, 130, 0.15);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: all 0.5s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 隐藏的截图容器 */
+        #shareImageContainer {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 800px;
+            background: #0a0a0d;
+            padding: 40px 50px 30px;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            z-index: -1;
+        }
+
+        #shareImageContainer .share-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #shareImageContainer .share-header .share-icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        #shareImageContainer .share-header h2 {
+            color: #e8d5b0;
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 8px;
+        }
+
+        #shareImageContainer .share-header .share-sub {
+            color: #5a5045;
+            font-size: 13px;
+            letter-spacing: 3px;
+            margin-top: 4px;
+        }
+
+        #shareImageContainer .share-divider {
+            width: 50px;
+            height: 1px;
+            background: #3a322a;
+            margin: 14px auto 0;
+        }
+
+        #shareImageContainer .share-card {
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 3px solid;
+        }
+
+        #shareImageContainer .share-card .share-role {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        #shareImageContainer .share-card .share-reply {
+            font-size: 18px;
+            line-height: 1.7;
+            color: #e8ddd0;
+            font-weight: 300;
+        }
+
+        #shareImageContainer .share-card-liyunlong {
+            background: rgba(40, 55, 40, 0.3);
+            border-left-color: #6b8f5e;
+        }
+        #shareImageContainer .share-card-liyunlong .share-role {
+            color: #8fb582;
+        }
+
+        #shareImageContainer .share-card-tongxiangyu {
+            background: rgba(55, 48, 38, 0.3);
+            border-left-color: #c9a86c;
+        }
+        #shareImageContainer .share-card-tongxiangyu .share-role {
+            color: #d4b87a;
+        }
+
+        #shareImageContainer .share-card-zhenhuan {
+            background: rgba(55, 38, 40, 0.3);
+            border-left-color: #a05a5a;
+        }
+        #shareImageContainer .share-card-zhenhuan .share-role {
+            color: #c97a7a;
+        }
+
+        #shareImageContainer .share-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(200, 170, 130, 0.08);
+        }
+
+        #shareImageContainer .share-footer .share-brand {
+            color: #5a5045;
+            font-size: 14px;
+            letter-spacing: 3px;
+        }
+
+        #shareImageContainer .share-footer .share-qrcode {
+            width: 80px;
+            height: 80px;
+            background: #0a0a0d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(200, 170, 130, 0.15);
+        }
+
+        #shareImageContainer .share-footer .share-qrcode img {
+            width: 70px;
+            height: 70px;
+        }
+
+        #shareImageContainer .share-footer .share-tag {
+            color: #3a322a;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <span class="icon">🪷</span>
+            <h1>反向许愿池</h1>
+            <div class="sub">把愿望丢进来 · 看看代价</div>
+            <div class="divider"></div>
+        </div>
+
+        <div class="input-area">
+            <textarea id="wishInput" placeholder="比如：年薪百万、瘦20斤、TA回心转意…" maxlength="80"></textarea>
+            <div class="input-row">
+                <span class="char-count"><span id="charCount">0</span>/80</span>
+                <button class="btn-submit" id="submitBtn">召唤</button>
+            </div>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <div class="result-label">— 三 位 回 响 —</div>
+
+            <div class="card card-liyunlong">
+                <div class="role">🔫 李云龙</div>
+                <div class="reply" id="replyLi">——</div>
+            </div>
+
+            <div class="card card-tongxiangyu">
+                <div class="role">💰 佟湘玉</div>
+                <div class="reply" id="replyTong">——</div>
+            </div>
+
+            <div class="card card-zhenhuan">
+                <div class="role">👑 甄嬛</div>
+                <div class="reply" id="replyZhen">——</div>
+            </div>
+
+            <div class="footer-actions">
+                <button id="shareBtn">📸 下载分享图</button>
+                <button id="refreshBtn">🔄 再来一次</button>
+            </div>
+        </div>
+
+        <div class="footer-bottom">—— 每天一次 · 清醒一下 ——</div>
+
+    </div>
+
+    <!-- 隐藏的分享图容器 -->
+    <div id="shareImageContainer">
+        <div class="share-header">
+            <span class="share-icon">🪷</span>
+            <h2>反向许愿池</h2>
+            <div class="share-sub">把愿望丢进来 · 看看代价</div>
+            <div class="share-divider"></div>
+        </div>
+        <div id="shareCardsContainer">
+            <div class="share-card share-card-liyunlong">
+                <div class="share-role">🔫 李云龙</div>
+                <div class="share-reply" id="shareReplyLi">——</div>
+            </div>
+            <div class="share-card share-card-tongxiangyu">
+                <div class="share-role">💰 佟湘玉</div>
+                <div class="share-reply" id="shareReplyTong">——</div>
+            </div>
+            <div class="share-card share-card-zhenhuan">
+                <div class="share-role">👑 甄嬛</div>
+                <div class="share-reply" id="shareReplyZhen">——</div>
+            </div>
+        </div>
+        <div class="share-footer">
+            <div>
+                <div class="share-brand">反向许愿池</div>
+                <div class="share-tag">每天一次 · 清醒一下</div>
+            </div>
+            <div class="share-qrcode">
+                <img id="shareQrcodeImg" src="" alt="二维码">
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        const textarea = document.getElementById('wishInput');
+        const charCount = document.getElementById('charCount');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultArea = document.getElementById('resultArea');
+        const replyLi = document.getElementById('replyLi');
+        const replyTong = document.getElementById('replyTong');
+        const replyZhen = document.getElementById('replyZhen');
+        const shareBtn = document.getElementById('shareBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const toast = document.getElementById('toast');
+
+        const shareReplyLi = document.getElementById('shareReplyLi');
+        const shareReplyTong = document.getElementById('shareReplyTong');
+        const shareReplyZhen = document.getElementById('shareReplyZhen');
+        const shareQrcodeImg = document.getElementById('shareQrcodeImg');
+
+        let toastTimer = null;
+        let currentReplies = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        textarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // 预加载二维码
+        async function loadQrcode() {
+            try {
+                const resp = await fetch('/api/qrcode');
+                const data = await resp.json();
+                if (data.qrcode) {
+                    shareQrcodeImg.src = data.qrcode;
+                }
+            } catch (e) {
+                console.log('二维码加载失败');
+            }
+        }
+        loadQrcode();
+
+        submitBtn.addEventListener('click', async function() {
+            const wish = textarea.value.trim();
+            if (!wish) {
+                textarea.focus();
+                showToast('✨ 先写个愿望吧');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '召唤中';
+            resultArea.classList.remove('show');
+
+            try {
+                const resp = await fetch('/api/wish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wish: wish })
+                });
+
+                const data = await resp.json();
+
+                if (data.error) {
+                    showToast('出错了：' + data.error);
+                    this.disabled = false;
+                    this.textContent = '召唤';
+                    return;
+                }
+
+                currentReplies = data.replies;
+                replyLi.textContent = data.replies.liyunlong || '——';
+                replyTong.textContent = data.replies.tongxiangyu || '——';
+                replyZhen.textContent = data.replies.zhenhuan || '——';
+
+                // 同步到分享容器
+                shareReplyLi.textContent = data.replies.liyunlong || '——';
+                shareReplyTong.textContent = data.replies.tongxiangyu || '——';
+                shareReplyZhen.textContent = data.replies.zhenhuan || '——';
+
+                resultArea.classList.add('show');
+
+            } catch (err) {
+                showToast('网络出错了，再试一次');
+            }
+
+            this.disabled = false;
+            this.textContent = '召唤';
+        });
+
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitBtn.click();
+            }
+        });
+
+        // 下载分享图
+        shareBtn.addEventListener('click', async function() {
+            if (!currentReplies || !currentReplies.liyunlong || currentReplies.liyunlong === '——') {
+                showToast('先召唤一次再分享 📸');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = '生成中…';
+
+            try {
+                const container = document.getElementById('shareImageContainer');
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#0a0a0d',
+                    width: 800,
+                    height: 600
+                });
+
+                const link = document.createElement('a');
+                link.download = `反向许愿池_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                showToast('✅ 图片已下载');
+            } catch (err) {
+                console.error(err);
+                showToast('生成失败，再试一次');
+            }
+
+            this.disabled = false;
+            this.textContent = '📸 下载分享图';
+        });
+
+        refreshBtn.addEventListener('click', function() {
+            resultArea.classList.remove('show');
+            currentReplies = null;
+            textarea.focus();
+            textarea.select();
+        });
+    </script>
+
+</body>
+</html>
