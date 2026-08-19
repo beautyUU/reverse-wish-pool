@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>反向许愿池</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="pool">🕳️</div>
+      <h1>反向许愿池</h1>
+      <p class="subtitle">许下愿望，听听代价</p>
+    </header>
+
+    <section class="wish-box">
+      <textarea id="wish" maxlength="50" rows="3"
+        placeholder="写下你特别想要的愿望…（不超过50字）"></textarea>
+      <div class="counter"><span id="count">0</span>/50</div>
+      <button id="submit">投向许愿池</button>
+    </section>
+
+    <section id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>正在聆听代价…</p>
+    </section>
+
+    <section id="result" class="result hidden"></section>
+
+    <p id="error" class="error hidden"></p>
+
+    <footer class="footer">愿望会成真，除非代价你承受不起 😏</footer>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

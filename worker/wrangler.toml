@@ -1,0 +1,5 @@
+name = "reverse-wish-pool"
+main = "index.js"
+compatibility_date = "2024-11-01"
+
+[env]
