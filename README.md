@@ -3,7 +3,6 @@ title: 反向许愿池
 emoji: 🕳️
 colorFrom: indigo
 colorTo: pink
-sdk: docker
 pinned: false
 ---
 
@@ -11,37 +10,55 @@ pinned: false
 
 用户许下愿望，由三位经典角色（李云龙 / 佟湘玉 / 甄嬛）说出"愿望成真的代价"。
 
-新版本采用 **Vite 前端 + Cloudflare Worker 代理**，完全免费、免服务器、可长期在线。
+🕳️ **在线访问**：[https://beautyuu.github.io/reverse-wish-pool/](https://beautyuu.github.io/reverse-wish-pool/)
+
+## 架构
+
+**Vite 前端 + Cloudflare Worker 代理**，完全免费、免服务器、可长期在线。
 
 ```
 反向许愿池/
-├── frontend/          # Vite 前端（HTML/CSS/JS）
-├── worker/index.js    # Cloudflare Worker 代理（藏密钥、调 DeepSeek）
+├── frontend/          # Vite 前端（HTML/CSS/JS），支持演示模式
+├── worker/index.js    # Cloudflare Worker 代理（藏密钥、调 DeepSeek、存数据）
 ├── worker/wrangler.toml
 └── app.py             # （旧）Flask 本地版本，可忽略
 ```
 
-## 部署到 Cloudflare（免费）
+前端**演示模式**：当后端未部署或不可用时，会自动用本地生成的三角色回复演示，保证页面随时可点可用。接上后端后自动切换为真实 DeepSeek 回复。
+
+## 部署前端到 GitHub Pages
+
+1. 前往仓库 **Settings → Pages**
+2. **Build and deployment → Source** 选择 **GitHub Actions**
+3. 稍等片刻，Actions 运行完成后访问上方在线链接即可
+4. 之后每次 `push` 到 `main` 分支都会自动重新构建发布
+
+## 部署后端接入真实回复（Cloudflare Worker）
+
+当前页面能点能用，但默认走本地演示回复。要让它调用 **DeepSeek** 生成真实回复：
 
 ### 1. 部署 Worker
-1. 去 https://dash.cloudflare.com 注册登录（可用 GitHub/Google 账号）
-2. 左侧 **Workers & Pages → 创建 → Worker → 快速编辑**
-3. 把 `worker/index.js` 的内容**全部粘贴**进去，保存
-4. 打开 Worker 的 **设置 → 变量和机密 → 添加**：
-   - 名称：`DEEPSEEK_API_KEY`
-   - 值：你的 DeepSeek API Key（机密）
-5. 回到 Worker 页面，记下它给你分配的域名，形如 `https://<你的名字>.workers.dev`
+```bash
+cd worker
+npx wrangler login                  # 登录 Cloudflare
+npx wrangler kv namespace create WISHES   # 创建 KV，把输出 ID 填进 wrangler.toml
+echo "你的DeepSeekKey" | npx wrangler secret put DEEPSEEK_API_KEY
+echo "一个随机的下载接口密钥" | npx wrangler secret put DATA_KEY
+npx wrangler deploy
+```
 
-### 2. 部署前端到 Pages
-1. 左侧 **Workers & Pages → 创建 → Pages**
-2. 选 **直接上传** 或 **Git 连接**（上传方式）：把 `frontend/dist` 目录内容拖进去
-   - 或用 CLI：`npm run build` 后在 `frontend/dist` 执行 `npx wrangler pages deploy dist`
-3. 部署完成后会得到 `https://<项目名>.pages.dev`
+### 2. 前端指向 Worker
+编辑 `frontend/vite.config.js`，把 `WORKER_URL` 改成你的 Worker 域名（如 `https://xxx.workers.dev`），重新构建并推送，页面即开始使用真实回复。
 
-### 3. 接线
-前端里请求的地址是编译期变量。部署后可二选一：
-- **方式 A**：编辑 `frontend/vite.config.js` 的 `WORKER_URL` 为你的 Worker 域名 `https://xxx.workers.dev`，重新 build 上传
-- **方式 B（推荐）**：在 Pages 项目里设环境变量，或用 Worker 作为 Pages 的代理路由（同一域名下 `/api/wish`）
+## 数据与下载
+
+Worker 将每次愿望、三角色回复、Token 数存入 Cloudflare KV。访问以下接口（需带 `DATA_KEY`）：
+
+- JSON 数据：`GET <worker域名>/api/data`，请求头带 `X-Data-Key: 你的DATA_KEY`
+- CSV 导出：`GET <worker域名>/api/data?format=csv`，同样带 `X-Data-Key`，可下载 `wishes.csv`
+- JSON 数据同时返回 `count`（总条数）和 `downloadCount`（下载次数）
+
+> CSV 导出每次会累加 `downloadCount`，用于统计下载次数。
 
 ## 本地开发
 
@@ -53,7 +70,7 @@ WORKER_URL=https://你的worker域名 npm run dev
 
 ## 说明
 
-- 密钥 `DEEPSEEK_API_KEY` 只存 Cloudflare Workers 的机密变量，不进仓库、不暴露给浏览器
+- 密钥 `DEEPSEEK_API_KEY`、`DATA_KEY` 只存 Cloudflare 机密变量，不进仓库、不暴露给浏览器
 - 该方案无后端服务器，任何 Cloudflare 免费账号均可，无需绑卡
 
 ## 旧方案（可选）
