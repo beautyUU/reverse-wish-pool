@@ -12,17 +12,18 @@ wishInput.addEventListener("input", () => {
   count.textContent = wishInput.value.length;
 });
 
+function demoKw(wish) {
+  // 从愿望里取关键片段（最长 6 字），用于生成各不相同但贴合输入的演示回复
+  const w = wish.replace(/我喜欢|我希望|我想|我要|请让我|求求|拜托|想|要|能/g, " ").trim();
+  const kw = (w.split(/\s+/).pop() || w).slice(0, 6);
+  return kw || wish.slice(0, 6);
+}
+
 function demoReplies(wish) {
-  const short = wish.length <= 12;
-  const liyunlong = short
-    ? "他娘的，想成真？先挨它几十炮再谈！"
-    : "这小子想得美，代价可不止两颗手榴弹。";
-  const tongxiangyu = short
-    ? "额滴神啊，这笔买卖，划不划算你心里没数？"
-    : "从同福客栈算到今，这笔账，划不划算你掂量掂量。";
-  const zhenhuan = short
-    ? "姐姐倒显得性急，罢了，福气是要拿命换的。"
-    : "月色正好，妹妹却只见眼前甜，倒把代价看轻了。";
+  const kw = demoKw(wish);
+  const liyunlong = `他娘的，就冲你这句"${kw}"，老子都要笑了，代价你扛得住？`;
+  const tongxiangyu = `额滴神啊，"${kw}"？这笔买卖划不划算，你仔细算算。`;
+  const zhenhuan = `姐姐的"${kw}"，怕是要拿旁的东西去换，罢了。`;
   return [
     { role: "liyunlong", icon: "🔫", name: "李云龙", text: liyunlong },
     { role: "tongxiangyu", icon: "💰", name: "佟湘玉", text: tongxiangyu },
