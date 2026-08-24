@@ -7,7 +7,7 @@ export default defineConfig({
     outDir: "dist",
   },
   define: {
-    // 部署后请换成你的 Cloudflare Worker 地址，例如 https://reverse-wish-pool.xxx.workers.dev
+    // Vercel 上函数与页面同源，直接用相对路径即可
     __WORKER_URL__: JSON.stringify(process.env.WORKER_URL || "/api/wish"),
   },
 });
